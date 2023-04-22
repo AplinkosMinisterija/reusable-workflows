@@ -21,11 +21,11 @@ on:
         required: false
         type: string
         default: "."
-      enable-audit:
-        description: "Optional input to enable npm package audit process"
+      audit-level:
+        description: "Optional input to set NPM audit level. Defaults to high if not set"
         required: false
-        type: boolean
-        default: true
+        type: string
+        default: "high"
       enable-linter:
         description: "Optional input to enable linter"
         required: false
@@ -132,5 +132,4 @@ jobs:
         run: npm test
 
       - name: Audit packages
-        run: npm audit --audit-level=high
-        if: ${{inputs.enable-audit}}
+        run: npm audit --audit-level=${{inputs.audit-level}}
