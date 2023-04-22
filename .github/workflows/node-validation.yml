@@ -36,6 +36,11 @@ on:
         required: false
         type: string
         default: "npm"
+      cache-dependency-path:
+        description: 'Optional input to specify the path to a dependency file: package-lock.json, yarn.lock, etc. Supports wildcards or a list of file names for caching multiple dependencies.'
+        required: false
+        type: string
+        default: ""
 
 jobs:
   build:
@@ -52,6 +57,7 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{inputs.node-version}}
+          cache-dependency-path: ${{inputs.cache-dependency-path}}
           cache: ${{inputs.node-caching}}
 
       - name: Install dependencies
