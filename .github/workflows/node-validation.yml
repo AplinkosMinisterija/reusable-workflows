@@ -26,6 +26,11 @@ on:
         required: false
         type: boolean
         default: true
+      enable-linter:
+        description: "Optional input to enable linter"
+        required: false
+        type: boolean
+        default: true
       node-version:
         description: "Optional input to set the version of Node.js used to build the project. The input syntax corresponds to the setup-node's one"
         required: false
@@ -63,11 +68,9 @@ jobs:
       - name: Install dependencies
         run: npm ci --ignore-scripts
 
-#      - name: Run prettier
-#        run: npm run format-check
-
       - name: Run linter
         run: npm run lint
+        if: ${{inputs.enable-linter}}
 
       - name: Build
         run: npm run build
