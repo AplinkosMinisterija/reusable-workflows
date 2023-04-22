@@ -83,13 +83,13 @@ jobs:
     services:
       postgres:
         image: postgres:15
-#        ports: [ '${{inputs.postgres-port}}:5432' ]
+        ports: [ '${{inputs.postgres-port}}:5432' ]
         env:
           POSTGRES_HOST: localhost
           POSTGRES_USER: ${{inputs.postgres-user}}
           POSTGRES_PASSWORD: ${{inputs.postgres-password}}
           POSTGRES_DB: ${{inputs.postgres-db}}
-          POSTGRES_PORT: ${{inputs.postgres-port}}
+          POSTGRES_PORT: 5432
           TZ: 'Etc/GMT'
           PGTZ: 'Etc/GMT'
         options: >-
@@ -100,7 +100,7 @@ jobs:
 
       redis:
         image: redis:7
-#        ports: [ '${{inputs.redis-port}}:6379' ]
+        ports: [ '${{inputs.redis-port}}:6379' ]
         options: >-
           --health-cmd "redis-cli ping"
           --health-interval 10s
