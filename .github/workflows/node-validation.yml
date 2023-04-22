@@ -46,6 +46,16 @@ on:
         required: false
         type: string
         default: ""
+      postgres-port:
+        description: 'Optional input to specify postgres port on the Docker host. Defaults to 5432 if not set.'
+        required: false
+        type: number
+        default: 5432
+      redis-port:
+        description: 'Optional input to specify redis port on the Docker host. Defaults to 6379 if not set.'
+        required: false
+        type: number
+        default: 6379
 
 jobs:
   validate:
@@ -58,12 +68,9 @@ jobs:
     services:
       postgres:
         image: postgres:15
-        ports: [ '5438:5432' ]
+        ports: [ ${{inputs.postgres-port}}:5432 ]
         env:
           POSTGRES_HOST: localhost
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: auth-test
           POSTGRES_POST: 5432
           TZ: 'Etc/GMT'
           PGTZ: 'Etc/GMT'
@@ -74,8 +81,8 @@ jobs:
           --health-retries 10
 
       redis:
-        image: redis
-        ports: [ '6673:6379' ]
+        image: redis:7
+        ports: [ ${{inputs.redis-port}}:6379 ]
         options: >-
           --health-cmd "redis-cli ping"
           --health-interval 10s
