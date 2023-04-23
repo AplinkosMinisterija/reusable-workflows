@@ -26,10 +26,10 @@ on:
         type: string
         default: "."
       docker-platforms:
-        description: "Optional input list to set docker target platforms for build. Defaults to linux/amd64,linux/arm64 in order to support also support the new mac architecture"
+        description: "Optional input list to set docker target platforms for build. Defaults to linux/amd64"
         required: false
         type: string
-        default: "linux/amd64,linux/arm64"
+        default: "linux/amd64"
       tag-latest:
         description: "Optional input to set enable latest tag"
         required: false
