@@ -78,7 +78,7 @@ To ensure continuous integration in a real-world scenario, I would like to creat
 
 #### Example
 
-<details>
+<details open>
     <summary>ci.yml</summary>
 
 ```yaml
@@ -128,7 +128,7 @@ To ensure continuous deployment in a real-world scenario, I would like to create
 
 #### Examples
 
-<details>
+<details open>
     <summary>deploy-development.yml</summary>
 
 ```yaml
@@ -165,7 +165,7 @@ jobs:
 
 </details>
 
-<details>
+<details open>
     <summary>deploy-staging.yml</summary>
 
 ```yaml
@@ -198,7 +198,7 @@ jobs:
 
 </details>
 
-<details>
+<details open>
     <summary>deploy-production.yml</summary>
 
 ```yaml
