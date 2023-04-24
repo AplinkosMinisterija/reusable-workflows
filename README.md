@@ -165,7 +165,7 @@ jobs:
 
 </details>
 
-<details open>
+<details>
     <summary>deploy-staging.yml</summary>
 
 ```yaml
@@ -198,7 +198,7 @@ jobs:
 
 </details>
 
-<details open>
+<details>
     <summary>deploy-production.yml</summary>
 
 ```yaml
@@ -218,7 +218,7 @@ jobs:
       docker-context: backend
       environment: production
       runs-on: ubuntu-latest
-      tag-latest: true
+      latest-tag: true
 
   deploy:
     name: My Deployment
