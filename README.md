@@ -72,7 +72,7 @@ from [actions/reusable-workflows](https://github.com/actions/reusable-workflows)
 
 ## License
 
-The scripts and documentation in this project are released under the [MIT License](LICENSE.txt)
+The scripts and documentation in this project are released under the [MIT License](LICENSE)
 
 ## Contributing
 
