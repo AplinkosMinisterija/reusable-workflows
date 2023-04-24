@@ -209,6 +209,8 @@ on:
     tags:
       - 'v[0-9]+.[0-9]+.[0-9]+'
 
+concurrency: deploy-to-production
+
 jobs:
   docker-build-push:
     name: Build & push docker image
