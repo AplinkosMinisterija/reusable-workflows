@@ -60,6 +60,7 @@ docker-build-push:
     docker-platforms: 'linux/amd64,linux/arm64'
     latest-tag: true
     git-ref: 1084a50
+    push: true
 ```
 
 For additional information
@@ -153,6 +154,7 @@ jobs:
       environment: development
       runs-on: ubuntu-latest
       git-ref: ${{ github.event.inputs.git-ref }}
+      push: true
 
   deploy:
     name: My Deployment
@@ -186,6 +188,7 @@ jobs:
       docker-context: backend
       environment: staging
       runs-on: ubuntu-latest
+      push: true
 
   deploy:
     name: My Deployment
@@ -221,6 +224,7 @@ jobs:
       environment: production
       runs-on: ubuntu-latest
       latest-tag: true
+      push: true
 
   deploy:
     name: My Deployment
