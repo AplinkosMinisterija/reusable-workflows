@@ -72,6 +72,8 @@ on:
         type: number
         default: 6379
 
+permissions: read-all
+
 jobs:
   validate:
     name: Validate node application
