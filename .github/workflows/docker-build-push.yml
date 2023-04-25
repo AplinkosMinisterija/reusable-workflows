@@ -41,6 +41,8 @@ on:
         type: string
         default: ""
 
+permissions: read-all
+
 jobs:
   docker-build-push:
     name: Build & push docker image
