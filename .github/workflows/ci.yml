@@ -55,7 +55,7 @@ jobs:
       redis-port: 6673
 
   test-docker-build-push:
-    name: Test building / push reusable workflow
+    name: Test docker build/push reusable workflow
     uses: ./.github/workflows/docker-build-push.yml
     with:
       docker-image: ghcr.io/aplinkosministerija/example
