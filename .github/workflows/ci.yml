@@ -42,8 +42,8 @@ jobs:
     name: Test Node validation reusable workflow
     uses: ./.github/workflows/node-validation.yml
     with:
-      working-directory: tests/moleculer-demo
-      cache-dependency-path: tests/moleculer-demo/package-lock.json
+      working-directory: test-projects/moleculer-demo
+      cache-dependency-path: test-projects/moleculer-demo/package-lock.json
       runs-on: ubuntu-latest
       node-version: 18.x
       enable-linter: true
@@ -59,7 +59,7 @@ jobs:
     uses: ./.github/workflows/docker-build-push.yml
     with:
       docker-image: ghcr.io/aplinkosministerija/example
-      docker-context: tests/moleculer-demo
+      docker-context: test-projects/moleculer-demo
       environment: test
       runs-on: ubuntu-latest
       latest-tag: true
