@@ -35,6 +35,11 @@ on:
         required: false
         type: boolean
         default: false
+      push:
+        description: "Optional input can be set to specify whether the Docker image should be pushed to the registry. Defaults to false"
+        required: false
+        type: boolean
+        default: false
       git-ref:
         description: "Optional input to set git branch, tag or SHA to checkout"
         required: false
@@ -95,7 +100,7 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: ${{inputs.docker-platforms}}
-          push: true
+          push: ${{inputs.push}}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

@@ -18,7 +18,6 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
-      - run: echo 'Hello'
 
       - name: Checkov check
         uses: bridgecrewio/checkov-action@v12
@@ -27,6 +26,7 @@ jobs:
           output_format: cli,sarif
           output_file_path: console,results.sarif
           quiet: true # optional: display only failed checks
+
       - name: Upload SARIF file
         uses: github/codeql-action/upload-sarif@v2
 
@@ -38,3 +38,30 @@ jobs:
         if: success() || failure()
         with:
           sarif_file: results.sarif
+
+  test-node-validation:
+    name: Test Node validation reusable workflow
+    uses: ./.github/workflows/node-validation.yml
+    with:
+      working-directory: tests/moleculer-demo
+      cache-dependency-path: tests/moleculer-demo/package-lock.json
+      runs-on: ubuntu-latest
+      node-version: 18.x
+      enable-linter: true
+      audit-level: none
+      postgres-user: postgres
+      postgres-password: postgres
+      postgres-db: my-db
+      postgres-port: 5438
+      redis-port: 6673
+
+  test-docker-build-push:
+    name: Test building / push reusable workflow
+    uses: ./.github/workflows/docker-build-push.yml
+    with:
+      docker-image: ghcr.io/aplinkosministerija/example
+      docker-context: tests/moleculer-demo
+      environment: test
+      runs-on: ubuntu-latest
+      latest-tag: true
+      push: false
