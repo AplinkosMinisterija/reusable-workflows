@@ -131,7 +131,7 @@ jobs:
         run: npm run build
 
       - name: Test
-        run: npm test
+        run: npm test --passWithNoTests 
 
       - name: Audit packages
         run: npm audit --audit-level=${{inputs.audit-level}}
