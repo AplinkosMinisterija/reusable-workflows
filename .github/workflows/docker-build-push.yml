@@ -25,6 +25,11 @@ on:
         required: false
         type: string
         default: "."
+      build-args:
+        description: "Optional input to set docker build-time variables"
+        required: false
+        type: string
+        default: ""
       docker-platforms:
         description: "Optional input list to set docker target platforms for build. Defaults to linux/amd64"
         required: false
@@ -101,6 +106,7 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           platforms: ${{inputs.docker-platforms}}
+          build-args: ${{inputs.build-args}}
           push: ${{inputs.push}}
           cache-from: type=gha
           cache-to: type=gha,mode=max
