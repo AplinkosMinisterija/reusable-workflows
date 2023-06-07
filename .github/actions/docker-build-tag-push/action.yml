@@ -35,6 +35,11 @@ inputs:
     required: false
     default: "false"
 
+  registry-password:
+    description: "Optional input for registry password"
+    required: false
+
+
 outputs:
   image-tag:
     description: "Docker image tag"
@@ -73,7 +78,7 @@ runs:
       with:
         registry: ghcr.io
         username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
+        password: ${{ inputs.registry-password }}
 
     - name: Build & push Docker image
       id: docker_image
