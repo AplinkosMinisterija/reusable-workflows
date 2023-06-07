@@ -72,3 +72,4 @@ jobs:
           docker-platforms: ${{inputs.docker-platforms}}
           latest-tag: ${{inputs.latest-tag}}
           push: ${{inputs.push}}
+          registry-password: ${{secrets.GITHUB_TOKEN}}
