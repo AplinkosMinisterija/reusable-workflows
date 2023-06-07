@@ -57,6 +57,9 @@ jobs:
   test-docker-build-push:
     name: Test docker build/push reusable workflow
     uses: ./.github/workflows/docker-build-push.yml
+    permissions:
+      contents: read
+      packages: write
     with:
       docker-image: ghcr.io/aplinkosministerija/example
       docker-context: test-projects/moleculer-demo
