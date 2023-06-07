@@ -56,7 +56,7 @@ jobs:
 
   test-docker-build-push:
     name: Test docker build/push reusable workflow
-    uses: ./.github/workflows/docker-build-push.yml
+    uses: .github/workflows/docker-build-push.yml
     permissions:
       contents: read
       packages: write
