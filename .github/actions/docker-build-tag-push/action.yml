@@ -1,6 +1,7 @@
 # Based on
 # - https://blog.jannikwempe.com/github-actions-trunk-based-development#heading-a-brief-introduction-to-trunk-based-development
 # - https://blog.derlin.ch/github-actions-reusable-workflow-docker-images
+# - https://github.com/BretFisher/docker-build-workflow/blob/main/.github/workflows/reusable-docker-build.yaml
 
 name: Build, tag & push docker image
 description: Build, tag & push docker image
