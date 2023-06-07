@@ -63,7 +63,8 @@ jobs:
           ref: ${{inputs.git-ref}}
           fetch-depth: ${{inputs.git-ref}} && 0 || 1 # In git-ref case: fetch all history for all branches and tags
 
-      - uses: ./.github/actions/docker-build-tag-push
+      - name: Build, tag & push docker image
+        uses: ./.github/actions/docker-build-tag-push
         with:
           docker-image: ${{inputs.docker-image}}
           environment: ${{inputs.environment}}
