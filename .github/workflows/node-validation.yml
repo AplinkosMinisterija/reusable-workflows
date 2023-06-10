@@ -153,10 +153,8 @@ jobs:
 
   eslint:
     name: Run eslint scanning
-    runs-on: ${{inputs.runs-on}}
-    defaults:
-      run:
-        working-directory: ${{inputs.working-directory}}
+    runs-on: ${{ inputs.runs-on }}
+    if: ${{ inputs.enable-linter }}
 
     steps:
       - name: Checkout code
@@ -168,17 +166,20 @@ jobs:
           npm install @microsoft/eslint-formatter-sarif@2.1.7
 
       - name: Run ESLint
-        run: npx eslint .
+        run: npx eslint ${{ inputs.working-directory }}
           --config .eslintrc.js
           --ext .js,.jsx,.ts,.tsx
           --format @microsoft/eslint-formatter-sarif
           --output-file eslint-results.sarif
         continue-on-error: true
 
+      - run: ls -la
+
       - name: Upload analysis results to GitHub
         uses: github/codeql-action/upload-sarif@v2
         with:
           sarif_file: eslint-results.sarif
+          category: eslint
           wait-for-processing: true
 
   checkov-scan:
