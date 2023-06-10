@@ -166,7 +166,7 @@ jobs:
           npm install @microsoft/eslint-formatter-sarif@2.1.7
 
       - name: Run ESLint
-        run: npx eslint ${{ inputs.working-directory }}
+        run: npx eslint .
           --config .eslintrc.js
           --ext .js,.jsx,.ts,.tsx
           --format @microsoft/eslint-formatter-sarif
@@ -180,7 +180,7 @@ jobs:
         with:
           sarif_file: eslint-results.sarif
           category: eslint
-          wait-for-processing: true
+          checkout_path: ${{ inputs.working-directory }}
 
   checkov-scan:
     runs-on: ${{inputs.runs-on}}
@@ -211,3 +211,5 @@ jobs:
         if: success() || failure()
         with:
           sarif_file: results.sarif
+          wait-for-processing: true
+          category: checkov
