@@ -69,6 +69,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Build, tag and push Docker image
+        id: docker
         uses: AplinkosMinisterija/reusable-workflows/.github/actions/docker-build-tag-push@main
         with:
           push: true
@@ -86,4 +87,4 @@ jobs:
           repo: ${{secrets.BIIP_TRIGGER_DEPLOY_REPOSITORY}}
           github_token: ${{secrets.BIIP_TRIGGER_DEPLOY_GH_TOKEN}}
           workflow_file_name: ${{secrets.BIIP_TRIGGER_DEPLOY_WORKFLOW_FILE_NAME}}
-          client_payload: '{"environment": "${{inputs.environment}}"}'
+          client_payload: '{"environment": "${{inputs.environment}}", "image-tag": "${{docker.outputs.image-tag}}"}'
