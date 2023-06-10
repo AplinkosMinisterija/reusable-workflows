@@ -181,9 +181,8 @@ jobs:
       - name: Upload analysis results to GitHub
         uses: github/codeql-action/upload-sarif@v2
         with:
-          sarif_file: eslint-results.sarif
+          sarif_file: ${{ inputs.working-directory }}/eslint-results.sarif
           category: eslint
-          checkout_path: ${{ github.workspace }}/${{ inputs.working-directory }}
 
   checkov-scan:
     runs-on: ${{inputs.runs-on}}
