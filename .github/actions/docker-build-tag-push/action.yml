@@ -88,6 +88,8 @@ runs:
         builder: ${{ steps.buildx.outputs.name }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
+        provenance: true
+        sbom: true
 
     - name: Output image tag
       id: image-tag
