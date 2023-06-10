@@ -56,6 +56,11 @@ on:
         required: false
         type: string
         default: ""
+      postgres-image:
+        description: 'Optional input to specify postgres image. Defaults to postgres:15 if not set.'
+        required: false
+        type: string
+        default: postgres:15
       postgres-port:
         description: 'Optional input to specify postgres port on the Docker host. Defaults to 5432 if not set.'
         required: false
