@@ -1,0 +1,90 @@
+# Based on
+# - https://blog.jannikwempe.com/github-actions-trunk-based-development#heading-a-brief-introduction-to-trunk-based-development
+# - https://blog.derlin.ch/github-actions-reusable-workflow-docker-images
+
+name: Deploy BIIP by pushing docker image and triggering workflow
+
+on:
+  workflow_call:
+    inputs:
+      docker-image:
+        description: "Required input to set docker image name"
+        required: true
+        type: string
+      environment:
+        description: "Required input to set environment"
+        required: true
+        type: string
+      runs-on:
+        description: "Optional input to set an operating systems which the workflow uses. Defaults to ubuntu-latest if not set"
+        required: false
+        type: string
+        default: "ubuntu-latest"
+      docker-context:
+        description: "Optional input to set docker context"
+        required: false
+        type: string
+        default: "."
+      build-args:
+        description: "Optional input to set docker build-time variables"
+        required: false
+        type: string
+        default: ""
+      docker-platforms:
+        description: "Optional input list to set docker target platforms for build. Defaults to linux/amd64"
+        required: false
+        type: string
+        default: "linux/amd64"
+      timeout-minutes:
+        description: "Optional input to set timeout minutes. Defaults to 15"
+        required: false
+        type: number
+        default: 15
+
+    secrets:
+      BIIP_TRIGGER_DEPLOY_ORGANIZATION:
+        description: "Required secret to set trigger workflow organization"
+        required: true
+      BIIP_TRIGGER_DEPLOY_REPOSITORY:
+        description: "Required secret to set trigger workflow repository"
+        required: true
+      BIIP_TRIGGER_DEPLOY_GH_TOKEN:
+        description: "Required secret to set trigger workflow GitHub token"
+        required: true
+      BIIP_TRIGGER_DEPLOY_WORKFLOW_FILE_NAME:
+        description: "Required secret to set trigger workflow file name"
+        required: true
+
+jobs:
+  docker-trigger-deploy:
+    name: Deploy by pushing docker image and triggering deploy workflow
+    runs-on: ${{inputs.runs-on}}
+    environment: ${{inputs.environment}}
+    timeout-minutes: ${{inputs.timeout-minutes}}
+    concurrency:
+      group: deploy-${{inputs.environment}}
+      cancel-in-progress: true
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Build, tag and push Docker image
+        id: docker
+        uses: AplinkosMinisterija/reusable-workflows/.github/actions/docker-build-tag-push@main
+        with:
+          push: true
+          docker-image: ${{inputs.docker-image}}
+          registry-password: ${{secrets.GITHUB_TOKEN}}
+          environment: ${{inputs.environment}}
+          build-args: ${{inputs.build-args}}
+          docker-context: ${{inputs.docker-context}}
+          docker-platforms: ${{inputs.docker-platforms}}
+
+      - name: Trigger deploy
+        uses: convictional/trigger-workflow-and-wait@v1.6.1
+        with:
+          owner: ${{secrets.BIIP_TRIGGER_DEPLOY_ORGANIZATION}}
+          repo: ${{secrets.BIIP_TRIGGER_DEPLOY_REPOSITORY}}
+          github_token: ${{secrets.BIIP_TRIGGER_DEPLOY_GH_TOKEN}}
+          workflow_file_name: ${{secrets.BIIP_TRIGGER_DEPLOY_WORKFLOW_FILE_NAME}}
+          client_payload: '{"environment": "${{inputs.environment}}"}'
