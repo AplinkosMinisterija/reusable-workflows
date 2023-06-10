@@ -87,4 +87,4 @@ jobs:
           repo: ${{secrets.BIIP_TRIGGER_DEPLOY_REPOSITORY}}
           github_token: ${{secrets.BIIP_TRIGGER_DEPLOY_GH_TOKEN}}
           workflow_file_name: ${{secrets.BIIP_TRIGGER_DEPLOY_WORKFLOW_FILE_NAME}}
-          client_payload: '{"environment": "${{inputs.environment}}", "image-tag": "${{steps.docker.outputs.image-tag}}"}'
+          client_payload: '{"environment": "${{inputs.environment}}"}'
