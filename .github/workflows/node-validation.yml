@@ -183,7 +183,7 @@ jobs:
         with:
           sarif_file: eslint-results.sarif
           category: eslint
-          checkout_path: ${{ inputs.working-directory }}
+          checkout_path: ${{ github.workspace }}/${{ inputs.working-directory }}
 
   checkov-scan:
     runs-on: ${{inputs.runs-on}}
