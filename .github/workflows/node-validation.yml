@@ -155,6 +155,9 @@ jobs:
     name: Run eslint scanning
     runs-on: ${{ inputs.runs-on }}
     if: ${{ inputs.enable-linter }}
+    defaults:
+      run:
+        working-directory: ${{inputs.working-directory}}
 
     steps:
       - name: Checkout code
