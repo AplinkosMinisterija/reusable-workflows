@@ -153,7 +153,11 @@ jobs:
 
   eslint:
     name: Run eslint scanning
-    runs-on: ubuntu-latest
+    runs-on: ${{inputs.runs-on}}
+    defaults:
+      run:
+        working-directory: ${{inputs.working-directory}}
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -176,3 +180,33 @@ jobs:
         with:
           sarif_file: eslint-results.sarif
           wait-for-processing: true
+
+  checkov-scan:
+    runs-on: ${{inputs.runs-on}}
+    name: Checkov checks
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Checkov check
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          # This will add both a CLI output to the console and create a results.sarif file
+          output_format: cli,sarif
+          output_file_path: console,results.sarif
+          soft_fail: true
+          quiet: true # optional: display only failed checks
+
+          skip_check: CKV2_GHA_1
+
+      - name: Upload SARIF file
+        uses: github/codeql-action/upload-sarif@v2
+
+        # Results are generated only on a success or failure
+        # this is required since GitHub by default won't run the next step
+        # when the previous one has failed. Security checks that do not pass will 'fail'.
+        # An alternative is to add `continue-on-error: true` to the previous step
+        # Or 'soft_fail: true' to checkov.
+        if: success() || failure()
+        with:
+          sarif_file: results.sarif
