@@ -12,9 +12,8 @@ inputs:
     required: false
     default: ghcr.io/${{ github.repository }}
   environment:
-    description: "Optional input to set environment"
-    required: false
-    default: ""
+    description: "Required input to set environment"
+    required: true
   docker-context:
     description: "Optional input to set docker context"
     required: false
@@ -62,7 +61,7 @@ runs:
       with:
         images: ${{inputs.docker-image}}
         tags: |
-          type=raw,value=${{inputs.steps.environment.outputs.lowercase}}-{{date 'YYYYMMDD'}}-{{sha}},priority=500
+          type=raw,value={{date 'YYYYMMDD'}}-{{sha}}-${{steps.environment.outputs.lowercase}},priority=500
           type=ref,event=tag,priority=400
           type=raw,value=${{steps.environment.outputs.lowercase}},enable=${{steps.environment.outputs.lowercase!=''}},priority=300
           type=ref,event=branch,suffix=-{{ sha }},prefix=${{steps.environment.outputs.lowercase}}-,priority=200
