@@ -2,7 +2,7 @@
 # - https://blog.jannikwempe.com/github-actions-trunk-based-development#heading-a-brief-introduction-to-trunk-based-development
 # - https://blog.derlin.ch/github-actions-reusable-workflow-docker-images
 
-name: Deploy by pushing docker image and triggering workflow
+name: Deploy BIIP by pushing docker image and triggering workflow
 
 on:
   workflow_call:
@@ -41,25 +41,19 @@ on:
         type: number
         default: 15
 
-      trigger-workflow-organization:
-        description: "Required input to set trigger workflow organization"
+    secrets:
+      BIIP_TRIGGER_DEPLOY_ORGANIZATION:
+        description: "Required secret to set trigger workflow organization"
         required: true
-        type: string
-
-      trigger-workflow-repository:
-        description: "Required input to set trigger workflow repository"
+      BIIP_TRIGGER_DEPLOY_REPOSITORY:
+        description: "Required secret to set trigger workflow repository"
         required: true
-        type: string
-
-      trigger-workflow-github-token:
-        description: "Required input to set trigger workflow github token"
+      BIIP_TRIGGER_DEPLOY_GH_TOKEN:
+        description: "Required secret to set trigger workflow GitHub token"
         required: true
-        type: string
-
-      trigger-workflow-file-name:
-        description: "Required input to set trigger workflow file name"
+      BIIP_TRIGGER_DEPLOY_WORKFLOW_FILE_NAME:
+        description: "Required secret to set trigger workflow file name"
         required: true
-        type: string
 
 jobs:
   docker-trigger-deploy:
@@ -88,8 +82,8 @@ jobs:
       - name: Trigger deploy
         uses: convictional/trigger-workflow-and-wait@v1.6.1
         with:
-          owner: ${{inputs.trigger-workflow-organization}}
-          repo: ${{inputs.trigger-workflow-repository}}
-          github_token: ${{inputs.trigger-workflow-github-token}}
-          workflow_file_name: ${{inputs.trigger-workflow-file-name}}
+          owner: ${{secrets.BIIP_TRIGGER_DEPLOY_ORGANIZATION}}
+          repo: ${{secrets.BIIP_TRIGGER_DEPLOY_REPOSITORY}}
+          github_token: ${{secrets.BIIP_TRIGGER_DEPLOY_GH_TOKEN}}
+          workflow_file_name: ${{secrets.BIIP_TRIGGER_DEPLOY_WORKFLOW_FILE_NAME}}
           client_payload: '{"environment": "${{inputs.environment}}"}'
