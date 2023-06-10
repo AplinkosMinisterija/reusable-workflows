@@ -1,0 +1,95 @@
+# Based on
+# - https://blog.jannikwempe.com/github-actions-trunk-based-development#heading-a-brief-introduction-to-trunk-based-development
+# - https://blog.derlin.ch/github-actions-reusable-workflow-docker-images
+
+name: Deploy by pushing docker image and triggering workflow
+
+on:
+  workflow_call:
+    inputs:
+      docker-image:
+        description: "Required input to set docker image name"
+        required: true
+        type: string
+      environment:
+        description: "Required input to set environment"
+        required: true
+        type: string
+      runs-on:
+        description: "Optional input to set an operating systems which the workflow uses. Defaults to ubuntu-latest if not set"
+        required: false
+        type: string
+        default: "ubuntu-latest"
+      docker-context:
+        description: "Optional input to set docker context"
+        required: false
+        type: string
+        default: "."
+      build-args:
+        description: "Optional input to set docker build-time variables"
+        required: false
+        type: string
+        default: ""
+      docker-platforms:
+        description: "Optional input list to set docker target platforms for build. Defaults to linux/amd64"
+        required: false
+        type: string
+        default: "linux/amd64"
+      timeout-minutes:
+        description: "Optional input to set timeout minutes. Defaults to 15"
+        required: false
+        type: number
+        default: 15
+
+      trigger-workflow-organization:
+        description: "Required input to set trigger workflow organization"
+        required: true
+        type: string
+
+      trigger-workflow-repository:
+        description: "Required input to set trigger workflow repository"
+        required: true
+        type: string
+
+      trigger-workflow-github-token:
+        description: "Required input to set trigger workflow github token"
+        required: true
+        type: string
+
+      trigger-workflow-file-name:
+        description: "Required input to set trigger workflow file name"
+        required: true
+        type: string
+
+jobs:
+  docker-trigger-deploy:
+    name: Deploy by pushing docker image and triggering deploy workflow
+    runs-on: ${{inputs.runs-on}}
+    environment: ${{inputs.environment}}
+    timeout-minutes: ${{inputs.timeout-minutes}}
+    concurrency:
+      group: deploy-${{inputs.environment}}
+      cancel-in-progress: true
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Build, tag and push Docker image
+        uses: AplinkosMinisterija/reusable-workflows/.github/actions/docker-build-tag-push@main
+        with:
+          push: true
+          docker-image: ${{inputs.docker-image}}
+          registry-password: ${{secrets.GITHUB_TOKEN}}
+          environment: ${{inputs.environment}}
+          build-args: ${{inputs.build-args}}
+          docker-context: ${{inputs.docker-context}}
+          docker-platforms: ${{inputs.docker-platforms}}
+
+      - name: Trigger deploy
+        uses: convictional/trigger-workflow-and-wait@v1.6.1
+        with:
+          owner: ${{inputs.trigger-workflow-organization}}
+          repo: ${{inputs.trigger-workflow-repository}}
+          github_token: ${{inputs.trigger-workflow-github-token}}
+          workflow_file_name: ${{inputs.trigger-workflow-file-name}}
+          client_payload: '{"environment": "${{inputs.environment}}"}'
