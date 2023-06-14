@@ -67,3 +67,16 @@ jobs:
       runs-on: ubuntu-latest
       latest-tag: true
       push: false
+
+  test-docker-build-tag-push-action:
+    name: Test docker build tag push action
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Build & tag docker image
+        uses: ./.github/actions/docker-build-tag-push
+        with:
+          docker-context: test-projects/moleculer-demo
+          environment: test
+          push: false
