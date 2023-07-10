@@ -31,21 +31,36 @@ on:
         required: false
         type: boolean
         default: true
+      package-manager:
+        description: "Optional input to set package manager. Supported values: npm, yarn. Defaults to npm."
+        required: false
+        type: string
+        default: "npm"
       node-version:
         description: "Optional input to set the version of Node.js used to build the project. The input syntax corresponds to the setup-node's one"
         required: false
         type: string
         default: "16.x"
-      node-caching:
-        description: "Optional input to set up caching for the setup-node action. The input syntax corresponds to the setup-node's one. Set to an empty string if caching isn't needed"
+      node-version-file:
+        description: "Optional input set File containing the version Spec of the version to use.  Examples: .nvmrc, .node-version, .tool-versions."
         required: false
         type: string
-        default: "npm"
+        default: ""
+      node-caching:
+        description: "Optional input to set up caching. The input syntax corresponds to the setup-node's one."
+        required: false
+        type: boolean
+        default: true
       cache-dependency-path:
         description: 'Optional input to specify the path to a dependency file: package-lock.json, yarn.lock, etc. Supports wildcards or a list of file names for caching multiple dependencies.'
         required: false
         type: string
         default: ""
+      postgres-image:
+        description: 'Optional input to specify postgres image. Defaults to postgres:15 if not set.'
+        required: false
+        type: string
+        default: postgres:15
       postgres-port:
         description: 'Optional input to specify postgres port on the Docker host. Defaults to 5432 if not set.'
         required: false
@@ -82,7 +97,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres:15
+        image: ${{inputs.postgres-image}}
         ports: [ '${{inputs.postgres-port}}:5432' ]
         env:
           POSTGRES_HOST: localhost
@@ -115,21 +130,78 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{inputs.node-version}}
+          node-version-file: ${{inputs.node-version-file}}
           cache-dependency-path: ${{inputs.cache-dependency-path}}
-          cache: ${{inputs.node-caching}}
+          cache: ${{ inputs.node-caching == true && inputs.package-manager || '' }}
 
-      - name: Install dependencies
+      - name: Install npm dependencies
+        if: ${{ inputs.package-manager == 'npm' }}
         run: npm ci --ignore-scripts
 
-      - name: Run linter
-        run: npm run lint
-        if: ${{inputs.enable-linter}}
+      - name: Install yarn dependencies
+        if: ${{ inputs.package-manager == 'yarn' }}
+        run: yarn install --immutable --immutable-cache --check-cache
 
       - name: Build
-        run: npm run build
+        run: ${{ inputs.package-manager }} run build
 
       - name: Test
-        run: npm test
+        run: ${{ inputs.package-manager }} test
 
       - name: Audit packages
-        run: npm audit --audit-level=${{inputs.audit-level}}
+        run: ${{ inputs.package-manager }} audit --audit-level=${{inputs.audit-level}}
+
+  eslint:
+    name: Run eslint scanning
+    runs-on: ${{ inputs.runs-on }}
+    if: ${{ inputs.enable-linter }}
+    defaults:
+      run:
+        working-directory: ${{inputs.working-directory}}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install ESLint
+        run: |
+          npm install eslint@8.10.0
+          npm install @microsoft/eslint-formatter-sarif@2.1.7
+
+      - name: Run ESLint
+        run: npx eslint .
+          --config .eslintrc.js
+          --ext .js,.jsx,.ts,.tsx
+          --format @microsoft/eslint-formatter-sarif
+          --output-file eslint-results.sarif
+        continue-on-error: true
+
+      - name: Upload analysis results to GitHub
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: ${{ inputs.working-directory }}/eslint-results.sarif
+          category: eslint
+
+  checkov-scan:
+    runs-on: ${{inputs.runs-on}}
+    name: Checkov checks
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Checkov check
+        uses: bridgecrewio/checkov-action@v12
+        with:
+          output_format: cli,sarif
+          output_file_path: console,results.sarif
+          soft_fail: true
+          quiet: true
+          skip_check: CKV2_GHA_1
+
+      - name: Upload SARIF file
+        uses: github/codeql-action/upload-sarif@v2
+        if: success() || failure()
+        with:
+          sarif_file: results.sarif
+          wait-for-processing: true
+          category: checkov
