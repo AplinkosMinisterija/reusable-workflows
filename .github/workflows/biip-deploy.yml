@@ -48,8 +48,11 @@ on:
       BIIP_TRIGGER_DEPLOY_REPOSITORY:
         description: "Required secret to set trigger workflow repository"
         required: true
-      BIIP_TRIGGER_DEPLOY_GH_TOKEN:
-        description: "Required secret to set trigger workflow GitHub token"
+      BIIP_TRIGGER_DEPLOY_APPLICATION_ID:
+        description: "Required secret to set trigger workflow application ID"
+        required: true
+      BIIP_TRIGGER_DEPLOY_APPLICATION_PRIVATE_KEY:
+        description: "Required secret to set trigger workflow application private key"
         required: true
       BIIP_TRIGGER_DEPLOY_WORKFLOW_FILE_NAME:
         description: "Required secret to set trigger workflow file name"
@@ -68,6 +71,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      - name: Get Token
+        id: get_workflow_token
+        uses: peter-murray/workflow-application-token-action@v2
+        with:
+          application_id: ${{ secrets.APPLICATION_ID }}
+          application_private_key: ${{ secrets.APPLICATION_PRIVATE_KEY }}
+
       - name: Build, tag and push Docker image
         id: docker
         uses: AplinkosMinisterija/reusable-workflows/.github/actions/docker-build-tag-push@main
@@ -85,6 +95,6 @@ jobs:
         with:
           owner: ${{secrets.BIIP_TRIGGER_DEPLOY_ORGANIZATION}}
           repo: ${{secrets.BIIP_TRIGGER_DEPLOY_REPOSITORY}}
-          github_token: ${{secrets.BIIP_TRIGGER_DEPLOY_GH_TOKEN}}
+          github_token: ${{ steps.get_workflow_token.outputs.token }}
           workflow_file_name: ${{secrets.BIIP_TRIGGER_DEPLOY_WORKFLOW_FILE_NAME}}
           client_payload: '{"environment": "${{inputs.environment}}"}'
