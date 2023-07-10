@@ -77,6 +77,7 @@ jobs:
         with:
           application_id: ${{ secrets.BIIP_TRIGGER_DEPLOY_APPLICATION_ID }}
           application_private_key: ${{ secrets.BIIP_TRIGGER_DEPLOY_APPLICATION_PRIVATE_KEY }}
+          organization: ${{secrets.BIIP_TRIGGER_DEPLOY_ORGANIZATION}}
 
       - name: Build, tag and push Docker image
         id: docker
