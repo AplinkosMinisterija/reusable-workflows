@@ -40,6 +40,11 @@ on:
         required: false
         type: number
         default: 15
+      sentry-project:
+        description: "Optional input to set sentry project"
+        required: false
+        type: string
+        default: ""
 
     secrets:
       BIIP_TRIGGER_DEPLOY_ORGANIZATION:
@@ -57,6 +62,12 @@ on:
       BIIP_TRIGGER_DEPLOY_WORKFLOW_FILE_NAME:
         description: "Required secret to set trigger workflow file name"
         required: true
+      BIIP_SENTRY_AUTH_TOKEN:
+        description: "Required secret to set sentry auth token"
+        required: true
+      BIIP_SENTRY_URL:
+        description: "Required secret to set sentry url"
+        required: true
 
 jobs:
   docker-trigger-deploy:
@@ -70,6 +81,19 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - id: environment
+        uses: ASzc/change-string-case-action@v5
+        with:
+          string: ${{ inputs.environment }}
+
+      - name: Generate version
+        id: version
+        run: echo "version=${version}" >> "$GITHUB_OUTPUT"
+        env:
+          version: ${{ startsWith(github.ref, 'refs/tags/') && github.ref || github.sha }}
 
       - name: Get Token
         id: get_workflow_token
@@ -87,7 +111,10 @@ jobs:
           docker-image: ${{inputs.docker-image}}
           registry-password: ${{secrets.GITHUB_TOKEN}}
           environment: ${{inputs.environment}}
-          build-args: ${{inputs.build-args}}
+          build-args: |
+            VERSION=${{ steps.version.outputs.version }}
+            ENVIRONMENT=${{ steps.environment.outputs.lowercase }}
+            ${{inputs.build-args}}
           docker-context: ${{inputs.docker-context}}
           docker-platforms: ${{inputs.docker-platforms}}
 
@@ -99,3 +126,15 @@ jobs:
           github_token: ${{ steps.get_workflow_token.outputs.token }}
           workflow_file_name: ${{secrets.BIIP_TRIGGER_DEPLOY_WORKFLOW_FILE_NAME}}
           client_payload: '{"environment": "${{inputs.environment}}"}'
+
+      - name: Create Sentry release
+        uses: getsentry/action-release@v1
+        if: inputs.sentry-project != ''
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.BIIP_SENTRY_AUTH_TOKEN }}
+          SENTRY_URL: ${{ secrets.BIIP_SENTRY_URL }}
+          SENTRY_ORG: 'biip'
+          SENTRY_PROJECT: ${{ inputs.sentry-project}}
+        with:
+          environment: ${{ steps.environment.outputs.lowercase }}
+          version: ${{ steps.version.outputs.version }}
