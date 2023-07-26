@@ -89,6 +89,9 @@ runs:
         cache-from: type=gha
         cache-to: type=gha,mode=max
         pull: true
+        provenance: false
+        sbom: false
+
 
     - name: Output image tag
       id: image-tag
