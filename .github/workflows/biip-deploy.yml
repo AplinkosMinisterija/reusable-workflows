@@ -144,3 +144,4 @@ jobs:
           dist: ${{ github.run_number }}
           ignore_missing: true
           ignore_empty: true
+          finalize: ${{ steps.environment.outputs.lowercase == 'production' && 'true' || 'false' }}
