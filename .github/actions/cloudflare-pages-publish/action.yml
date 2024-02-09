@@ -25,6 +25,9 @@ runs:
         name: ${{ inputs.artefact-name }}
         path: cloudflare-pages-distribution
 
+    - run: ls -lah cloudflare-pages-distribution
+      shell: bash
+
     - name: Publish to Cloudflare Pages
       uses: cloudflare/pages-action@v1
       id: cloudflare
