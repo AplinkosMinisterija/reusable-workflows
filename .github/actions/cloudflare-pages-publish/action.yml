@@ -24,6 +24,7 @@ runs:
       with:
         name: ${{ inputs.artefact-name }}
         path: cloudflare-pages-distribution
+        merge-multiple: true
 
     - name: Publish to Cloudflare Pages
       uses: cloudflare/pages-action@v1
