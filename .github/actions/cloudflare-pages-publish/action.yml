@@ -1,0 +1,61 @@
+# Commenting part is based on https://github.com/cloudflare/pages-action/issues/16
+name: Cloudflare Pages publish
+description: Publish to Cloudflare Pages
+
+inputs:
+  cloudflare-api-token:
+    description: Cloudflare API Token
+    required: true
+  cloudflare-account-id:
+    description: Cloudflare Account ID
+    required: true
+  cloudflare-project-name:
+    description: The name of the Pages project to upload to
+    required: true
+  directory:
+    description: The directory of static assets to upload
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Comment deploy start
+      if: github.event_name != 'push'
+      uses: mshick/add-pr-comment@v2
+      with:
+        message-id: cloudflare-deploy
+        message: |
+          ### <span aria-hidden="true">🚧</span> Deploy Preview building...
+
+          |  Name | Link |
+          |---------------------------------|------------------------|
+          |<span aria-hidden="true">🔨</span> Latest commit | ${{ github.sha }} |
+          |<span aria-hidden="true">🔍</span> Latest deploy log | ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }} |
+          ---
+
+    - name: Publish to Cloudflare Pages
+      uses: cloudflare/pages-action@v1
+      id: cloudflare
+      with:
+        apiToken: ${{ inputs.cloudflare-api-token }}
+        accountId: ${{ inputs.cloudflare-account-id }}
+        projectName: ${{ inputs.cloudflare-project-name }}
+        directory: ${{ inputs.directory }}
+        gitHubToken: ${{ github.token }}
+        wranglerVersion: '3'
+
+    - name: Comment deploy url
+      uses: mshick/add-pr-comment@v2
+      if: github.event_name != 'push'
+      with:
+        message-id: cloudflare-deploy
+        message: |
+          ### <span aria-hidden="true">✅</span> Deploy Preview ready!
+          
+          |  Name | Link |
+          |---------------------------------|------------------------|
+          |<span aria-hidden="true">🔨</span> Latest commit | ${{ github.sha }} |
+          |<span aria-hidden="true">🔍</span> Latest deploy log | ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }} |
+          |<span aria-hidden="true">😎</span> Deploy Preview Url | [${{ steps.cloudflare.outputs.url }}](${{ steps.cloudflare.outputs.url }}) |
+          |<span aria-hidden="true">🌳</span> Environment | ${{ steps.cloudflare.outputs.environment }} |
+          ---
