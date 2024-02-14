@@ -58,7 +58,7 @@ jobs:
     runs-on: ${{inputs.runs-on}}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{inputs.git-ref}}
           fetch-depth: ${{inputs.git-ref}} && 0 || 1 # In git-ref case: fetch all history for all branches and tags
