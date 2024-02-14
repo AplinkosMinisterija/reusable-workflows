@@ -34,6 +34,10 @@ inputs:
     description: "Optional input for registry password"
     default: ${{ github.token }}
     required: false
+  no-cache:
+    description: "Optional input to not use cache when building the image. Defaults to false"
+    required: false
+    default: "false"
 
 outputs:
   image-tag:
@@ -86,12 +90,12 @@ runs:
         build-args: ${{inputs.build-args}}
         push: ${{inputs.push}}
         builder: ${{ steps.buildx.outputs.name }}
+        no-cache: ${{ inputs.no-cache }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
         pull: true
         provenance: false
         sbom: false
-
 
     - name: Output image tag
       id: image-tag
