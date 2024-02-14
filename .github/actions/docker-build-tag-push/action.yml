@@ -92,7 +92,7 @@ runs:
         builder: ${{ steps.buildx.outputs.name }}
         no-cache: ${{ inputs.no-cache }}
         cache-from: type=gha
-        cache-to: type=gha,mode=max
+        cache-to: type=gha,mode=max,ignore-error=true
         pull: true
         provenance: false
         sbom: false
