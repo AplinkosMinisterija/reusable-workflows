@@ -13,36 +13,6 @@ documentation and best practices for creating and sharing reusable workflows.
 
 ## Available workflows
 
-### Node.js application validation
-
-This workflow **compiles** and **tests** the code. Additionally, it starts **Postgres** and **Redis** services that may
-be required to run the tests. Optionally, it checks that the code adheres to **linting** rules and can run `npm audit`
-on
-the packages in the repository.
-
-#### Usage
-
-```yaml
-node-validation:
-  uses: AplinkosMinisterija/reusable-workflows/.github/workflows/node-validation.yml@main
-  with:
-    runs-on: ubuntu-latest
-    working-directory: backend
-    cache-dependency-path: backend/package-lock.json
-    node-version: 18.x
-    node-caching: npm
-    audit-level: none
-    enable-linter: false
-    postgres-user: postgres-user
-    postgres-password: postgres-password
-    postgres-db: my-db
-    postgres-port: 5438
-    redis-port: 6673
-```
-
-For additional information
-see [node-validation.yml](https://github.com/AplinkosMinisterija/reusable-workflows/blob/main/.github/workflows/node-validation.yml)
-
 ### Build & push docker image
 
 This workflow automates the building, tagging, and pushing of Docker images to GitHub's Container Registry.
@@ -67,48 +37,6 @@ For additional information
 see [docker-build-push.yml](https://github.com/AplinkosMinisterija/reusable-workflows/blob/main/.github/workflows/docker-build-push.yml)
 
 ## Using workflows in real-life
-
-### Continuous Integration
-
-To ensure continuous integration in a real-world scenario, I would like to create workflows that:
-
-- Compile, run, lint, and audit Node.js applications.
-- Use Postgres and Redis for testing purposes.
-- Work efficiently with a monorepo.
-- Include caching to speed up the workflow process.
-
-#### Example
-
-<details open>
-    <summary>ci.yml</summary>
-
-```yaml
-name: Continuous Integration
-
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-
-jobs:
-  validate-backend:
-    name: Validate backend
-    uses: AplinkosMinisterija/reusable-workflows/.github/workflows/node-validation.yml@main
-    with:
-      working-directory: backend
-      cache-dependency-path: backend/package-lock.json
-      runs-on: ubuntu-latest
-      node-version: 18.x
-      audit-level: critical
-      enable-linter: true
-      postgres-user: postgres
-      postgres-password: postgres
-      postgres-db: my-db
-      postgres-port: 5438
-      redis-port: 6673
-``` 
-
-</details>
 
 ### Continuous deployment
 

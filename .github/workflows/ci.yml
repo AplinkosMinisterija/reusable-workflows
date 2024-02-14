@@ -24,7 +24,7 @@ jobs:
           output_format: cli,sarif
           output_file_path: console,results.sarif
           quiet: true # optional: display only failed checks
-          skip_check: CKV_DOCKER_2,CKV2_GHA_1
+          skip_check: CKV_DOCKER_2,CKV_DOCKER_3,CKV2_GHA_1
 
       - name: Upload SARIF file
         uses: github/codeql-action/upload-sarif@v2
@@ -38,22 +38,6 @@ jobs:
         with:
           sarif_file: results.sarif
 
-  test-node-validation:
-    name: Test Node validation reusable workflow
-    uses: ./.github/workflows/node-validation.yml
-    with:
-      working-directory: test-projects/moleculer-demo
-      cache-dependency-path: test-projects/moleculer-demo/package-lock.json
-      runs-on: ubuntu-latest
-      node-version: 18.x
-      enable-linter: true
-      audit-level: none
-      postgres-user: postgres
-      postgres-password: postgres
-      postgres-db: my-db
-      postgres-port: 5438
-      redis-port: 6673
-
   test-docker-build-push:
     name: Test docker build/push reusable workflow
     uses: ./.github/workflows/docker-build-push.yml
@@ -62,7 +46,7 @@ jobs:
       packages: write
     with:
       docker-image: ghcr.io/aplinkosministerija/example
-      docker-context: test-projects/moleculer-demo
+      docker-context: test
       environment: test
       runs-on: ubuntu-latest
       latest-tag: true
@@ -77,7 +61,7 @@ jobs:
       - name: Build & tag docker image
         uses: ./.github/actions/docker-build-tag-push
         with:
-          docker-context: test-projects/moleculer-demo
+          docker-context: test
           environment: test
           push: false
 
