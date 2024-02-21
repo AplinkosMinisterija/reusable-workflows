@@ -1,0 +1,44 @@
+name: Trigger workflow & wait
+description: Trigger workflow in another repository and wait
+
+inputs:
+  application-id:
+    description: "Required input to set application id"
+    required: true
+  application-private-key:
+    description: "Required input to set application private key"
+    required: true
+  workflow-file-name:
+    description: "Required input to set workflow file name"
+    required: true
+  workflow-payload:
+    description: "Required input to set workflow payload"
+    required: true
+  repository:
+    description: "Required input to set repository"
+    required: true
+  organization:
+    description: "Optional input to set organization. Defaults to current organization"
+    required: false
+    default: ${{ github.repository_owner }}
+
+runs:
+  using: composite
+  steps:
+    - name: Get Token
+      id: get_workflow_token
+      uses: peter-murray/workflow-application-token-action@v3
+      with:
+        application_id: ${{ inputs.application-id }}
+        application_private_key: ${{ inputs.application-private-key }}
+        organization: ${{ inputs.organization }}
+        revoke_token: true
+
+    - name: Trigger deploy
+      uses: convictional/trigger-workflow-and-wait@v1.6.5
+      with:
+        owner: ${{ inputs.organization }}
+        repo: ${{ inputs.repository }}
+        github_token: ${{ steps.get_workflow_token.outputs.token }}
+        workflow_file_name: ${{ inputs.workflow-file-name }}
+        client_payload: ${{ inputs.workflow-payload }}
