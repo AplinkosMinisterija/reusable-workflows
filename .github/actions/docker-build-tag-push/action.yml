@@ -18,6 +18,9 @@ inputs:
     description: "Optional input to set docker context"
     required: false
     default: "."
+  file:
+    description: "Optional input to set path to the Dockerfile"
+    required: false
   build-args:
     description: "Optional input to set docker build-time variables"
     required: false
@@ -85,6 +88,7 @@ runs:
       uses: docker/build-push-action@v5
       with:
         context: ${{inputs.docker-context}}
+        file: ${{inputs.file}}
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
         platforms: ${{inputs.docker-platforms}}
