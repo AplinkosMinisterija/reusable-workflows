@@ -51,13 +51,13 @@ runs:
   using: composite
   steps:
     - id: environment
-      uses: ASzc/change-string-case-action@v5
+      uses: ASzc/change-string-case-action@v6
       with:
         string: ${{inputs.environment}}
 
     - name: Set up QEMU
       id: qemu
-      uses: docker/setup-qemu-action@v2
+      uses: docker/setup-qemu-action@v3
 
     - name: Setup buildx
       id: buildx
