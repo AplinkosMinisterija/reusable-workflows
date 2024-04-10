@@ -73,7 +73,6 @@ runs:
           type=semver,pattern={{major}}.{{minor}},priority=390
           type=semver,pattern={{major}},priority=380
           type=raw,value=${{steps.environment.outputs.lowercase}},enable=${{steps.environment.outputs.lowercase!=''}},priority=300
-          type=raw,value=latest,enable={{is_default_branch}},priority=100
 
     - name: Login to GitHub Container Registry
       uses: docker/login-action@v3
