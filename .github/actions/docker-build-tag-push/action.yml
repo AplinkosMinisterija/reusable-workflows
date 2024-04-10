@@ -69,10 +69,10 @@ runs:
       with:
         images: ${{inputs.docker-image}}
         tags: |
-          type=raw,value={{date 'YYYYMMDD'}}-{{sha}}-${{steps.environment.outputs.lowercase}},priority=500
           type=ref,event=tag,priority=400
+          type=semver,pattern={{major}}.{{minor}},priority=390
+          type=semver,pattern={{major}},priority=380
           type=raw,value=${{steps.environment.outputs.lowercase}},enable=${{steps.environment.outputs.lowercase!=''}},priority=300
-          type=ref,event=branch,suffix=-{{ sha }},prefix=${{steps.environment.outputs.lowercase}}-,priority=200
           type=raw,value=latest,enable={{is_default_branch}},priority=100
 
     - name: Login to GitHub Container Registry
