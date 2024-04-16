@@ -41,6 +41,14 @@ inputs:
     description: "Optional input to not use cache when building the image. Defaults to false"
     required: false
     default: "false"
+  cache-from:
+    description: "Optional input to set cache-from. Defaults to type=gha"
+    required: false
+    default: "type=gha"
+  cache-to:
+    description: "Optional input to set cache-to. Defaults to type=gha,mode=max,ignore-error=true"
+    required: false
+    default: "type=gha,mode=max,ignore-error=true"
 
 outputs:
   image-tag:
@@ -95,8 +103,8 @@ runs:
         push: ${{inputs.push}}
         builder: ${{ steps.buildx.outputs.name }}
         no-cache: ${{ inputs.no-cache }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max,ignore-error=true
+        cache-from: ${{ inputs.cache-from }}
+        cache-to: ${{ inputs.cache-to }}
         pull: true
         provenance: false
         sbom: false
