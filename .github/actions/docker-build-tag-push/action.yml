@@ -51,33 +51,15 @@ inputs:
     default: "type=gha,mode=max,ignore-error=true"
 
 outputs:
-  version:
-    description: "Generated Docker image version"
-    value: ${{ steps.docker_image.outputs.version }}
-  tags:
-    description: "Generated Docker tags"
-    value: ${{ steps.docker_image.outputs.tags }}
-  labels:
-    description: "Generated Docker labels"
-    value: ${{ steps.docker_image.outputs.labels }}
-  annotations:
-    description: "Generated annotations"
-    value: ${{ steps.docker_image.outputs.annotations }}
-  json:
-    description: "JSON output of tags and labels"
-    value: ${{ steps.docker_image.outputs.json }}
-  bake-file-tags:
-    description: "Bake definition file with tags"
-    value: ${{ steps.docker_image.outputs.bake-file-tags }}
-  bake-file-labels:
-    description: "Bake definition file with labels"
-    value: ${{ steps.docker_image.outputs.bake-file-labels }}
-  bake-file-annotations:
-    description: "Bake definiton file with annotations"
-    value: ${{ steps.docker_image.outputs.bake-file-annotations }}
-  bake-file:
-    description: "Bake definition file with tags and labels"
-    value: ${{ steps.docker_image.outputs.bake-file }}
+  imageid:
+    description: Image ID
+    value: ${{ steps.docker_image.outputs.imageid }}
+  digest:
+    description: Image digest
+    value: ${{ steps.docker_image.outputs.digest }}
+  metadata:
+    description: Build result metadata
+    value: ${{ steps.docker_image.outputs.metadata }}
 
 runs:
   using: composite
