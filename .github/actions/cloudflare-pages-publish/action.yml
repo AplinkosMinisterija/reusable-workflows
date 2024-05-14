@@ -15,6 +15,9 @@ inputs:
   artifact-name:
     description: Name of the artifact to download
     required: true
+  branch:
+    description: The name of the branch you want to deploy to
+    required: false
 
 runs:
   using: composite
@@ -33,6 +36,7 @@ runs:
         apiToken: ${{ inputs.cloudflare-api-token }}
         accountId: ${{ inputs.cloudflare-account-id }}
         projectName: ${{ inputs.cloudflare-project-name }}
+        branch: ${{ inputs.branch }}
         directory: cloudflare-pages-distribution
         gitHubToken: ${{ github.token }}
         wranglerVersion: '3'
