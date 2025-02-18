@@ -85,7 +85,7 @@ jobs:
             git config --global --add safe.directory /app &&
             composer install --no-progress --prefer-dist --no-interaction &&
             composer outdated --direct --no-interaction | grep -q . && echo true || echo false
-          ")""
+          ")"
           echo "update_needed=$UPDATE_NEEDED" >> "$GITHUB_ENV"
           echo "🔄 Update needed: $UPDATE_NEEDED"
 
