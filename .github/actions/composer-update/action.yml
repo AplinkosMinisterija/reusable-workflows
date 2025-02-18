@@ -85,6 +85,7 @@ runs:
 
     - name: Check for Changes
       id: git-status
+      if: env.update_needed == 'true'
       run: |
         CHANGES=$(git status --porcelain composer.json composer.lock)
         if [[ -n "$CHANGES" ]]; then
