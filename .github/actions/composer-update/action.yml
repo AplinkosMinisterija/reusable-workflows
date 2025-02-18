@@ -2,6 +2,9 @@ name: Run composer update
 description: Run composer update
 
 inputs:
+  github-token:
+    description: "Required input to set github token"
+    required: true
   node-version:
     description: "Optional input to set node version. Defaults to 20.x"
     required: false
@@ -104,7 +107,7 @@ runs:
         git commit -m "Auto update composer ($(date +'%Y%m%d'))"
 
         # Authenticate and push branch
-        git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+        git remote set-url origin https://x-access-token:${{ inputs.github-token }}@github.com/${{ github.repository }}.git
         git push origin "$BRANCH_NAME"
 
         echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
@@ -120,4 +123,4 @@ runs:
         body: "This PR updates composer packages to the latest version."
         labels: ${{inputs.pr-labels}}
         reviewers: ${{inputs.pr-reviewers}}
-        token: ${{ secrets.GITHUB_TOKEN }}
+        token: ${{ inputs.github-token }}
