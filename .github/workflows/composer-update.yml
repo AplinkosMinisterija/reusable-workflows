@@ -106,7 +106,7 @@ jobs:
         id: create-branch
         if: env.changes == 'true'
         run: |
-          BRANCH_NAME="c${{inputs.branch-prefix}}-$(date +'%Y%m%d')"
+          BRANCH_NAME="${{inputs.branch-prefix}}-$(date +'%Y%m%d')"
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -b "$BRANCH_NAME"
