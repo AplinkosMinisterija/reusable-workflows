@@ -38,6 +38,10 @@ runs:
       with:
         node-version: ${{inputs.node-version}}
 
+    - name: Install Yarn
+      run: npm install -g yarn
+      shell: bash
+
     - name: Install Dependencies
       run: yarn install --frozen-lockfile
       shell: bash
