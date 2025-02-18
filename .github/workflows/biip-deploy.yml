@@ -20,6 +20,10 @@ on:
         required: false
         type: string
         default: "ubuntu-latest"
+      container:
+        description: "Optional input to set a container which the workflow uses"
+        required: false
+        type: string
       docker-context:
         description: "Optional input to set docker context"
         required: false
@@ -70,6 +74,7 @@ jobs:
   docker-trigger-deploy:
     name: Deploy by pushing docker image and triggering deploy workflow
     runs-on: ${{inputs.runs-on}}
+    container: ${{ inputs.container }}
     environment: ${{inputs.environment}}
     timeout-minutes: ${{inputs.timeout-minutes}}
     concurrency:
@@ -129,7 +134,7 @@ jobs:
           client_payload: '{"environment": "${{inputs.environment}}"}'
 
       - name: Create Sentry release
-        uses: getsentry/action-release@v1
+        uses: getsentry/action-release@v1.7.0
         if: inputs.enable-sentry
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.BIIP_SENTRY_AUTH_TOKEN }}
