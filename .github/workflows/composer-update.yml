@@ -105,16 +105,16 @@ jobs:
         run: |
           CHANGES="$(git status --porcelain composer.json composer.lock)"
           if [[ -n "$CHANGES" ]]; then
-            echo "changes=true" >> "$GITHUB_ENV"
+            echo "has_changes=true" >> "$GITHUB_ENV"
             echo "✅ Changes detected in composer files."
           else
-            echo "changes=false" >> "$GITHUB_ENV"
+            echo "has_changes=false" >> "$GITHUB_ENV"
             echo "✅ No changes detected."
           fi
 
       - name: Create and Push Update Branch
         id: create-branch
-        if: env.changes == 'true'
+        if: env.has_changes == 'true'
         run: |
           BRANCH_NAME="${{inputs.branch-prefix}}-$(date +'%Y%m%d')"
           echo "🚀 Creating branch: $BRANCH_NAME"
@@ -132,7 +132,7 @@ jobs:
           echo "BRANCH_NAME=$BRANCH_NAME" >> "$GITHUB_ENV"
 
       - name: Create Pull Request
-        if: env.changes == 'true'
+        if: env.has_changes == 'true'
         uses: peter-evans/create-pull-request@v7
         with:
           branch: ${{ env.BRANCH_NAME }}
