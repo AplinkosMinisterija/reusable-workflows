@@ -1,0 +1,116 @@
+name: Run composer update
+description: Run composer update
+
+inputs:
+  node-version:
+    description: "Optional input to set node version. Defaults to 20.x"
+    required: false
+    default: "20.x"
+  composer-version:
+    description: "Optional input to set composer version. Defaults to 2.6"
+    required: false
+    default: "2.6"
+  branch-prefix:
+    description: "Optional input to set branch prefix. Defaults to composer-update"
+    required: false
+    default: composer-update
+  pr-reviewers:
+    description: "Optional input to set PR reviewers"
+    required: false
+    default: ""
+  pr-labels:
+    description: "Optional input to set PR labels"
+    required: false
+    default: ""
+  pr-base-branch:
+    description: "Optional input to set PR's base branch. Defaults to main"
+    required: false
+    default: "main"
+
+runs:
+  using: composite
+  steps:
+    - name: Use Node.js ${{inputs.node-version}}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{inputs.node-version}}
+        cache: yarn
+
+    - name: Install Dependencies
+      run: yarn install --frozen-lockfile
+
+    - name: Pre-pull Composer Image (Cache Optimization)
+      run: docker pull composer:${{inputs.composer-version}}
+
+    - name: Ensure Composer Lock File is Up to Date
+      run: |
+        echo "🔄 Running composer update --lock to sync lock file..."
+        docker run --rm -v "$PWD:/app" -w /app composer:${{inputs.composer-version}} sh -c "
+          git config --global --add safe.directory /app &&
+          composer update --lock
+        "
+
+    - name: Check for Composer updates (via Docker)
+      id: check-updates
+      run: |
+        echo "🔍 Running composer outdated..."
+        UPDATE_NEEDED=$(docker run --rm -v "$PWD:/app" -w /app composer:${{inputs.composer-version}} sh -c "
+          git config --global --add safe.directory /app &&
+          composer install --no-progress --prefer-dist --no-interaction &&
+          composer outdated --direct --no-interaction | grep -q . && echo true || echo false
+        ")
+        echo "update_needed=$UPDATE_NEEDED" >> $GITHUB_ENV
+        echo "🔄 Update needed: $UPDATE_NEEDED"
+
+    - name: Update composer (via Docker)
+      if: env.update_needed == 'true'
+      run: |
+        echo "🚀 Running composer update..."
+        docker run --rm -v "$PWD:/app" -w /app composer:${{inputs.composer-version}} sh -c "
+          git config --global --add safe.directory /app &&
+          composer install --no-progress --prefer-dist --no-interaction &&
+          composer update --no-progress --prefer-dist --no-interaction
+        "
+
+    - name: Check for Changes
+      id: git-status
+      run: |
+        CHANGES=$(git status --porcelain composer.json composer.lock)
+        if [[ -n "$CHANGES" ]]; then
+          echo "changes=true" >> $GITHUB_ENV
+          echo "✅ Changes detected in composer files."
+        else
+          echo "changes=false" >> $GITHUB_ENV
+          echo "✅ No changes detected."
+        fi
+
+    - name: Create and Push Update Branch
+      id: create-branch
+      if: env.changes == 'true'
+      run: |
+        BRANCH_NAME="${{inputs.branch-prefix}}-$(date +'%Y%m%d')"
+        echo "🚀 Creating branch: $BRANCH_NAME"
+
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git checkout -b "$BRANCH_NAME"
+        git add composer.json composer.lock
+        git commit -m "Auto update composer ($(date +'%Y%m%d'))"
+
+        # Authenticate and push branch
+        git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+        git push origin "$BRANCH_NAME"
+
+        echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+
+    - name: Create Pull Request
+      if: env.changes == 'true'
+      uses: peter-evans/create-pull-request@v5
+      with:
+        branch: ${{ env.BRANCH_NAME }}
+        base: ${{inputs.pr-base-branch}}
+        title: "Composer auto update"
+        body: "This PR updates composer packages to the latest version."
+        labels: ${{inputs.pr-labels}}
+        reviewers: ${{inputs.pr-reviewers}}
+        token: ${{ secrets.GITHUB_TOKEN }}
