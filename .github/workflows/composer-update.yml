@@ -81,11 +81,11 @@ jobs:
         id: check-updates
         run: |
           echo "🔍 Running composer outdated..."
-          UPDATE_NEEDED=$(docker run --rm -v "$PWD:/app" -w /app composer:${{inputs.composer-version}} sh -c "
+          UPDATE_NEEDED="$(docker run --rm -v "$PWD:/app" -w /app composer:${{inputs.composer-version}} sh -c "
             git config --global --add safe.directory /app &&
             composer install --no-progress --prefer-dist --no-interaction &&
             composer outdated --direct --no-interaction | grep -q . && echo true || echo false
-          ")
+          ")"
           echo "update_needed=$UPDATE_NEEDED" >> $GITHUB_ENV
           echo "🔄 Update needed: $UPDATE_NEEDED"
 
@@ -133,7 +133,7 @@ jobs:
 
       - name: Create Pull Request
         if: env.changes == 'true'
-        uses: peter-evans/create-pull-request@v5
+        uses: peter-evans/create-pull-request@v7
         with:
           branch: ${{ env.BRANCH_NAME }}
           base: ${{inputs.pr-base-branch}}
