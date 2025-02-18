@@ -38,9 +38,11 @@ runs:
 
     - name: Install Dependencies
       run: yarn install --frozen-lockfile
+      shell: bash
 
     - name: Pre-pull Composer Image (Cache Optimization)
       run: docker pull composer:${{inputs.composer-version}}
+      shell: bash
 
     - name: Ensure Composer Lock File is Up to Date
       run: |
@@ -49,6 +51,7 @@ runs:
           git config --global --add safe.directory /app &&
           composer update --lock
         "
+      shell: bash
 
     - name: Check for Composer updates (via Docker)
       id: check-updates
@@ -61,6 +64,7 @@ runs:
         ")
         echo "update_needed=$UPDATE_NEEDED" >> $GITHUB_ENV
         echo "🔄 Update needed: $UPDATE_NEEDED"
+      shell: bash
 
     - name: Update composer (via Docker)
       if: env.update_needed == 'true'
@@ -71,6 +75,7 @@ runs:
           composer install --no-progress --prefer-dist --no-interaction &&
           composer update --no-progress --prefer-dist --no-interaction
         "
+      shell: bash
 
     - name: Check for Changes
       id: git-status
@@ -83,6 +88,7 @@ runs:
           echo "changes=false" >> $GITHUB_ENV
           echo "✅ No changes detected."
         fi
+      shell: bash
 
     - name: Create and Push Update Branch
       id: create-branch
@@ -102,6 +108,7 @@ runs:
         git push origin "$BRANCH_NAME"
 
         echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+      shell: bash
 
     - name: Create Pull Request
       if: env.changes == 'true'
