@@ -79,12 +79,12 @@ jobs:
         id: outdated
         run: |
           composer outdated --direct --no-interaction | tee outdated.log
-          if [ -s outdated.log ]; then
-            echo "update_needed=true" >> $GITHUB_ENV
+          if [[ -s "outdated.log" ]]; then
+            echo "update_needed=true" >> "$GITHUB_ENV"
           else
-            echo "update_needed=false" >> $GITHUB_ENV
+            echo "update_needed=false" >> "$GITHUB_ENV"
           fi
-
+      
       - name: Update Dependencies
         if: env.update_needed == 'true'
         uses: php-actions/composer@v6
@@ -96,24 +96,24 @@ jobs:
         id: git-status
         if: env.update_needed == 'true'
         run: |
-          if git diff --exit-code composer.json composer.lock; then
-            echo "changes=false" >> $GITHUB_ENV
+          if git diff --exit-code "composer.json" "composer.lock"; then
+            echo "changes=false" >> "$GITHUB_ENV"
           else
-            echo "changes=true" >> $GITHUB_ENV
+            echo "changes=true" >> "$GITHUB_ENV"
           fi
 
       - name: Create and Push Update Branch
         id: create-branch
         if: env.changes == 'true'
         run: |
-          BRANCH_NAME="${{inputs.branch-prefix}}-$(date +'%Y%m%d')"
+          BRANCH_NAME="c${{inputs.branch-prefix}}-$(date +'%Y%m%d')"
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -b "$BRANCH_NAME"
-          git add composer.json composer.lock
+          git add "composer.json" "composer.lock"
           git commit -m "Auto update composer ($(date +'%Y%m%d'))"
           git push origin "$BRANCH_NAME"
-          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+          echo "BRANCH_NAME=$BRANCH_NAME" >> "$GITHUB_ENV"
 
       - name: Create Pull Request
         if: env.changes == 'true'
