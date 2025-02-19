@@ -42,7 +42,7 @@ on:
         description: "Optional input to set PR's base branch. Defaults to main"
         type: string
         required: false
-        default: ""
+        default: "main"
 
 jobs:
   docker-trigger-deploy:
