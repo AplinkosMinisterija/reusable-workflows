@@ -43,6 +43,11 @@ on:
         type: string
         required: false
         default: "main"
+      checkout-ref:
+        description: "Optional git ref to checkout for update checks. When empty, uses pr-base-branch. Useful when the caller runs from a different branch."
+        type: string
+        required: false
+        default: ""
       debug:
         description: "Enable verbose logging for troubleshooting"
         type: boolean
@@ -71,6 +76,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ inputs.checkout-ref != '' && inputs.checkout-ref || inputs.pr-base-branch }}
 
       - name: Use Node.js ${{inputs.node-version}}
         uses: actions/setup-node@v4
