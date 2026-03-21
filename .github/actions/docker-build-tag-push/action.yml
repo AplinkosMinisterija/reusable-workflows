@@ -65,21 +65,21 @@ runs:
   using: composite
   steps:
     - id: environment
-      uses: ASzc/change-string-case-action@v6
+      uses: ASzc/change-string-case-action@v8
       with:
         string: ${{inputs.environment}}
 
     - name: Set up QEMU
       id: qemu
-      uses: docker/setup-qemu-action@v3
+      uses: docker/setup-qemu-action@v4
 
     - name: Setup buildx
       id: buildx
-      uses: docker/setup-buildx-action@v3
+      uses: docker/setup-buildx-action@v4
 
     - name: Set Docker metadata
       id: meta
-      uses: docker/metadata-action@v5
+      uses: docker/metadata-action@v6
       with:
         images: ${{inputs.docker-image}}
         tags: |
@@ -99,7 +99,7 @@ runs:
 
     - name: Build & push Docker image
       id: docker_image
-      uses: docker/build-push-action@v5
+      uses: docker/build-push-action@v7
       with:
         context: ${{inputs.docker-context}}
         file: ${{inputs.file}}

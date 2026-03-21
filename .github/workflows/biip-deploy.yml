@@ -86,7 +86,7 @@ jobs:
           fetch-depth: 0
 
       - id: environment
-        uses: ASzc/change-string-case-action@v6
+        uses: ASzc/change-string-case-action@v8
         with:
           string: ${{ inputs.environment }}
 
