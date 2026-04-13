@@ -48,6 +48,11 @@ on:
         type: string
         required: false
         default: ""
+      auto-merge:
+        description: "Automatically merge the PR after creation using merge commit"
+        type: boolean
+        required: false
+        default: false
       debug:
         description: "Enable verbose logging for troubleshooting"
         type: boolean
@@ -149,6 +154,7 @@ jobs:
           fi
 
       - name: Create Pull Request
+        id: create-pr
         if: env.update_needed == 'true' && env.has_changes == 'true'
         uses: peter-evans/create-pull-request@v7
         with:
@@ -163,3 +169,9 @@ jobs:
           labels: ${{inputs.pr-labels}}
           reviewers: ${{inputs.pr-reviewers}}
           token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Auto-merge Pull Request
+        if: inputs.auto-merge && steps.create-pr.outputs.pull-request-operation == 'created'
+        run: gh pr merge --auto --merge "${{ steps.create-pr.outputs.pull-request-number }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
