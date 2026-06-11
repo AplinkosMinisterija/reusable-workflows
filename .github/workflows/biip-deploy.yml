@@ -119,6 +119,8 @@ jobs:
           build-args: |
             VERSION=${{ steps.version.outputs.version }}
             ENVIRONMENT=${{ steps.environment.outputs.lowercase }}
+            ${{ inputs.enable-sentry && format('SENTRY_AUTH_TOKEN={0}', secrets.BIIP_SENTRY_AUTH_TOKEN) || '' }}
+            ${{ inputs.enable-sentry && format('SENTRY_URL={0}', secrets.BIIP_SENTRY_URL) || '' }}
             ${{inputs.build-args}}
           docker-context: ${{inputs.docker-context}}
           docker-platforms: ${{inputs.docker-platforms}}
