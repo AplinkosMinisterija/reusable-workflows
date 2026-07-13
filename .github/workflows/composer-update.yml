@@ -128,8 +128,9 @@ jobs:
 
       - name: Set Update Branch Name
         run: |
-          BRANCH_NAME="${{inputs.branch-prefix}}-$(date +'%Y%m%d')"
+          BRANCH_NAME="${{inputs.branch-prefix}}"
           echo "BRANCH_NAME=$BRANCH_NAME" >> "$GITHUB_ENV"
+          echo "RUN_DATE=$(date +'%Y-%m-%d')" >> "$GITHUB_ENV"
           echo "🌿 Branch name: $BRANCH_NAME"
 
       - name: Update Composer (via Docker)
@@ -163,15 +164,18 @@ jobs:
           add-paths: |
             composer.json
             composer.lock
-          commit-message: "Auto update composer (${{ env.BRANCH_NAME }})"
+          commit-message: "Auto update composer (${{ env.RUN_DATE }})"
           title: "Composer auto update"
-          body: "This PR updates composer packages to the latest version."
+          body: "This PR updates composer packages to the latest version. Last update: ${{ env.RUN_DATE }}."
           labels: ${{inputs.pr-labels}}
           reviewers: ${{inputs.pr-reviewers}}
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Auto-merge Pull Request
-        if: inputs.auto-merge && steps.create-pr.outputs.pull-request-operation == 'created'
-        run: gh pr merge --auto --merge "${{ steps.create-pr.outputs.pull-request-number }}"
+        if: inputs.auto-merge && contains(fromJSON('["created", "updated"]'), steps.create-pr.outputs.pull-request-operation)
+        run: |
+          # --auto works only when required checks are pending; fall back to a direct merge otherwise
+          gh pr merge --auto --merge "$PR_NUMBER" || gh pr merge --merge "$PR_NUMBER"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ steps.create-pr.outputs.pull-request-number }}
