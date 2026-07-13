@@ -49,6 +49,16 @@ on:
         required: false
         type: boolean
         default: false
+      cache-from:
+        description: "Optional input to set buildx cache-from. Defaults to GitHub Actions cache"
+        required: false
+        type: string
+        default: "type=gha"
+      cache-to:
+        description: "Optional input to set buildx cache-to. Defaults to GitHub Actions cache"
+        required: false
+        type: string
+        default: "type=gha,mode=max,ignore-error=true"
 
     secrets:
       BIIP_TRIGGER_DEPLOY_REPOSITORY:
@@ -124,6 +134,8 @@ jobs:
             ${{inputs.build-args}}
           docker-context: ${{inputs.docker-context}}
           docker-platforms: ${{inputs.docker-platforms}}
+          cache-from: ${{inputs.cache-from}}
+          cache-to: ${{inputs.cache-to}}
 
       - name: Trigger deploy
         uses: convictional/trigger-workflow-and-wait@v1.6.5
