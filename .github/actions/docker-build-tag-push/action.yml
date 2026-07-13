@@ -71,6 +71,8 @@ runs:
 
     - name: Set up QEMU
       id: qemu
+      # QEMU is only needed for cross-platform emulation; skip it for plain amd64 builds
+      if: ${{ inputs.docker-platforms != 'linux/amd64' }}
       uses: docker/setup-qemu-action@v4
 
     - name: Setup buildx
