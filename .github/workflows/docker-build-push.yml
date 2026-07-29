@@ -16,10 +16,10 @@ on:
         required: true
         type: string
       runs-on:
-        description: "Optional input to set an operating systems which the workflow uses. Defaults to ubuntu-latest if not set"
+        description: "Optional input to set the runner the workflow uses. Defaults to the self-hosted am-github-runner (avoids GitHub-hosted billing limits). Pass 'ubuntu-latest' to use a GitHub-hosted runner."
         required: false
         type: string
-        default: "ubuntu-latest"
+        default: "am-github-runner"
       docker-context:
         description: "Optional input to set docker context"
         required: false
