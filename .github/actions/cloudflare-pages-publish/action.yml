@@ -1,6 +1,5 @@
-# Commenting part is based on https://github.com/cloudflare/pages-action/issues/16
 name: Cloudflare Pages publish
-description: Publish to Cloudflare Pages
+description: Publish a build artifact to Cloudflare Pages
 
 inputs:
   cloudflare-api-token:
@@ -16,27 +15,64 @@ inputs:
     description: Name of the artifact to download
     required: true
   branch:
-    description: The name of the branch you want to deploy to
+    description: The name of the branch you want to deploy to. Defaults to the pull request head branch, otherwise the pushed branch.
     required: false
+  github-token:
+    description: Token used to record a GitHub Deployment pointing at the published URL. Pass an empty string to skip.
+    required: false
+    default: ${{ github.token }}
+  wrangler-version:
+    description: Wrangler version used to run `pages deploy`
+    required: false
+    default: '4'
+
+outputs:
+  url:
+    description: URL of the created deployment
+    value: ${{ steps.cloudflare.outputs.deployment-url }}
+  alias-url:
+    description: Branch alias URL of the deployment, if any
+    value: ${{ steps.cloudflare.outputs.pages-deployment-alias-url }}
+  environment:
+    description: Pages environment the deployment landed in (production or preview)
+    value: ${{ steps.cloudflare.outputs.pages-environment }}
+  deployment-id:
+    description: ID of the created deployment
+    value: ${{ steps.cloudflare.outputs.pages-deployment-id }}
 
 runs:
   using: composite
   steps:
-    - name: Download distribution artefact
+    - name: Download distribution artifact
       uses: actions/download-artifact@v4
       with:
-        name: ${{ inputs.artefact-name }}
-        path: cloudflare-pages-distribution
-        merge-multiple: true
+        name: ${{ inputs.artifact-name }}
+        path: ${{ github.workspace }}/cloudflare-pages-distribution
 
+    # wrangler-action installs Wrangler with the package manager it detects from the
+    # lockfile in its working directory, and Yarn refuses when the calling repo's
+    # `engines.node` does not match the runner. An empty directory outside the
+    # checkout keeps the install on npm and the repo untouched.
+    - name: Prepare an isolated Wrangler workspace
+      shell: bash
+      run: mkdir -p "${RUNNER_TEMP}/wrangler"
+
+    # cloudflare/pages-action was removed from GitHub in September 2026; wrangler-action
+    # is Cloudflare's replacement and, given a GitHub token, records the same
+    # GitHub Deployment the old action did.
     - name: Publish to Cloudflare Pages
-      uses: cloudflare/pages-action@v1
+      uses: cloudflare/wrangler-action@v4
       id: cloudflare
       with:
         apiToken: ${{ inputs.cloudflare-api-token }}
         accountId: ${{ inputs.cloudflare-account-id }}
-        projectName: ${{ inputs.cloudflare-project-name }}
-        branch: ${{ inputs.branch }}
-        directory: cloudflare-pages-distribution
-        gitHubToken: ${{ github.token }}
-        wranglerVersion: '3'
+        gitHubToken: ${{ inputs.github-token }}
+        wranglerVersion: ${{ inputs.wrangler-version }}
+        packageManager: npm
+        workingDirectory: ${{ runner.temp }}/wrangler
+        command: >-
+          pages deploy ${{ github.workspace }}/cloudflare-pages-distribution
+          --project-name=${{ inputs.cloudflare-project-name }}
+          --branch=${{ inputs.branch || github.head_ref || github.ref_name }}
+          --commit-hash=${{ github.event.pull_request.head.sha || github.sha }}
+          --commit-dirty=true
