@@ -47,7 +47,15 @@ runs:
       uses: actions/download-artifact@v4
       with:
         name: ${{ inputs.artifact-name }}
-        path: cloudflare-pages-distribution
+        path: ${{ github.workspace }}/cloudflare-pages-distribution
+
+    # wrangler-action installs Wrangler with the package manager it detects from the
+    # lockfile in its working directory, and Yarn refuses when the calling repo's
+    # `engines.node` does not match the runner. An empty directory outside the
+    # checkout keeps the install on npm and the repo untouched.
+    - name: Prepare an isolated Wrangler workspace
+      shell: bash
+      run: mkdir -p "${RUNNER_TEMP}/wrangler"
 
     # cloudflare/pages-action was removed from GitHub in September 2026; wrangler-action
     # is Cloudflare's replacement and, given a GitHub token, records the same
@@ -60,8 +68,10 @@ runs:
         accountId: ${{ inputs.cloudflare-account-id }}
         gitHubToken: ${{ inputs.github-token }}
         wranglerVersion: ${{ inputs.wrangler-version }}
+        packageManager: npm
+        workingDirectory: ${{ runner.temp }}/wrangler
         command: >-
-          pages deploy cloudflare-pages-distribution
+          pages deploy ${{ github.workspace }}/cloudflare-pages-distribution
           --project-name=${{ inputs.cloudflare-project-name }}
           --branch=${{ inputs.branch || github.head_ref || github.ref_name }}
           --commit-hash=${{ github.event.pull_request.head.sha || github.sha }}
