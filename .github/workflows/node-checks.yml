@@ -1,0 +1,155 @@
+name: Node checks
+
+# Types, lint, tests and a security scan for a Node/TypeScript repo, so every
+# repo gets the same gate from five lines instead of its own copy.
+#
+#   jobs:
+#     checks:
+#       uses: AplinkosMinisterija/reusable-workflows/.github/workflows/node-checks.yml@main
+#       with:
+#         node-version: 22
+#
+# A step whose script is absent is skipped, so a repo adopts it before it has
+# every script. Hosted by default: this fires on every push to every PR, and
+# the self-hosted scale set is one node behind one egress IP that GitHub
+# rate-limits.
+
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        description: "Node major to test on. Match the repo's engines field."
+        required: false
+        type: string
+        default: "22"
+      runs-on:
+        description: "Runner. Keep the hosted default for PR-triggered jobs."
+        required: false
+        type: string
+        default: "ubuntu-latest"
+      working-directory:
+        description: "Package root, when it is not the repository root."
+        required: false
+        type: string
+        default: "."
+      package-manager:
+        description: "yarn or npm."
+        required: false
+        type: string
+        default: "yarn"
+      semgrep:
+        description: "Run the semgrep scan."
+        required: false
+        type: boolean
+        default: true
+      semgrep-config:
+        description: "Space-separated semgrep rulesets."
+        required: false
+        type: string
+        default: "p/typescript p/secrets p/owasp-top-ten"
+      bundle-budget:
+        description: "Build and check dist/ against .bundle-budget.json (frontends)."
+        required: false
+        type: boolean
+        default: false
+      timeout-minutes:
+        description: "Cap for the checks job."
+        required: false
+        type: number
+        default: 20
+
+jobs:
+  checks:
+    name: Types, lint and tests
+    runs-on: ${{ inputs.runs-on }}
+    timeout-minutes: ${{ inputs.timeout-minutes }}
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ inputs.node-version }}
+          cache: ${{ inputs.package-manager }}
+          cache-dependency-path: ${{ inputs.working-directory }}/${{ inputs.package-manager == 'yarn' && 'yarn.lock' || 'package-lock.json' }}
+
+      - name: Install
+        run: |
+          if [ "${{ inputs.package-manager }}" = "yarn" ]; then
+            yarn install --frozen-lockfile
+          else
+            npm ci
+          fi
+
+      # Each script is optional, so a repo can adopt the gate today and add the
+      # missing script tomorrow — but a script that EXISTS must pass.
+      - name: Which scripts exist
+        id: scripts
+        run: |
+          for s in typecheck lint test; do
+            if node -e "process.exit(require('./package.json').scripts?.['$s'] ? 0 : 1)"; then
+              echo "$s=yes" >> "$GITHUB_OUTPUT"
+            else
+              echo "::notice::no \"$s\" script — skipped"
+              echo "$s=no" >> "$GITHUB_OUTPUT"
+            fi
+          done
+
+      - name: Typecheck
+        if: steps.scripts.outputs.typecheck == 'yes'
+        run: ${{ inputs.package-manager }} run typecheck
+
+      - name: Lint
+        if: steps.scripts.outputs.lint == 'yes'
+        run: ${{ inputs.package-manager }} run lint
+
+      - name: Tests
+        if: steps.scripts.outputs.test == 'yes'
+        run: ${{ inputs.package-manager }} run test
+
+      # What the user downloads, not what the repo weighs. The budget file is
+      # committed, so growth is a visible decision rather than a drift.
+      - name: Build
+        if: inputs.bundle-budget
+        run: ${{ inputs.package-manager }} run build
+
+      # Checked out, not curl'd: a CI job should not fetch and run a script
+      # over the network.
+      - name: Fetch the budget script
+        if: inputs.bundle-budget
+        uses: actions/checkout@v4
+        with:
+          repository: AplinkosMinisterija/reusable-workflows
+          ref: main
+          path: .reusable-workflows
+          sparse-checkout: scripts
+
+      - name: Bundle budget
+        if: inputs.bundle-budget
+        run: node "$GITHUB_WORKSPACE/.reusable-workflows/scripts/bundle-budget.mjs"
+
+  semgrep:
+    name: Security scan
+    if: inputs.semgrep
+    runs-on: ${{ inputs.runs-on }}
+    timeout-minutes: 15
+    container:
+      image: semgrep/semgrep
+    steps:
+      - uses: actions/checkout@v4
+
+      # `--error` so a finding fails the job: a scan whose result nobody has to
+      # read is the same as no scan.
+      # Through env, not interpolated into the command: the caller controls the
+      # value, and a reusable workflow should not hand it to a shell verbatim.
+      - name: Semgrep
+        env:
+          SEMGREP_RULES: ${{ inputs.semgrep-config }}
+        run: |
+          set -- $SEMGREP_RULES
+          args=""
+          for rule in "$@"; do args="$args --config $rule"; done
+          semgrep scan --error --quiet $args
+        working-directory: ${{ inputs.working-directory }}
