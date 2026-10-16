@@ -47,6 +47,11 @@ on:
         required: false
         type: string
         default: "p/typescript p/secrets p/owasp-top-ten"
+      bundle-budget:
+        description: "Build and check dist/ against .bundle-budget.json (frontends)."
+        required: false
+        type: boolean
+        default: false
       timeout-minutes:
         description: "Cap for the checks job."
         required: false
@@ -103,6 +108,27 @@ jobs:
       - name: Tests
         if: steps.scripts.outputs.test == 'yes'
         run: ${{ inputs.package-manager }} run test
+
+      # What the user downloads, not what the repo weighs. The budget file is
+      # committed, so growth is a visible decision rather than a drift.
+      - name: Build
+        if: inputs.bundle-budget
+        run: ${{ inputs.package-manager }} run build
+
+      # Checked out, not curl'd: a CI job should not fetch and run a script
+      # over the network.
+      - name: Fetch the budget script
+        if: inputs.bundle-budget
+        uses: actions/checkout@v4
+        with:
+          repository: AplinkosMinisterija/reusable-workflows
+          ref: main
+          path: .reusable-workflows
+          sparse-checkout: scripts
+
+      - name: Bundle budget
+        if: inputs.bundle-budget
+        run: node "$GITHUB_WORKSPACE/.reusable-workflows/scripts/bundle-budget.mjs"
 
   semgrep:
     name: Security scan
