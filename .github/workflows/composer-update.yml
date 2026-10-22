@@ -9,7 +9,7 @@ on:
         type: string
         default: "ubuntu-latest"
       timeout-minutes:
-        description: "Optional input to set timeout minutes. Defaults to 45, because with auto-merge the job also waits for the PR checks to finish before merging"
+        description: "Optional input to set timeout minutes. Defaults to 45, leaving room for validate-command (e.g. a Docker build) before auto-merging"
         required: false
         type: number
         default: 45
@@ -53,6 +53,11 @@ on:
         type: boolean
         required: false
         default: false
+      validate-command:
+        description: "Optional shell command run on the updated checkout before auto-merging, e.g. `docker build --pull .`. A PR opened with GITHUB_TOKEN never gets pull_request workflow runs, so this is the only way to validate the update before it lands; if it fails the PR is left open and the job fails"
+        type: string
+        required: false
+        default: ""
       debug:
         description: "Enable verbose logging for troubleshooting"
         type: boolean
@@ -154,6 +159,16 @@ jobs:
             echo "✅ No changes detected."
           fi
 
+      - name: Validate update
+        id: validate
+        if: env.update_needed == 'true' && env.has_changes == 'true' && inputs.auto-merge && inputs.validate-command != ''
+        continue-on-error: true
+        run: |
+          echo "🔎 Running validate-command on the updated checkout..."
+          bash -eo pipefail -c "$VALIDATE_COMMAND"
+        env:
+          VALIDATE_COMMAND: ${{ inputs.validate-command }}
+
       - name: Create Pull Request
         id: create-pr
         if: env.update_needed == 'true' && env.has_changes == 'true'
@@ -174,36 +189,18 @@ jobs:
       - name: Auto-merge Pull Request
         if: inputs.auto-merge && contains(fromJSON('["created", "updated"]'), steps.create-pr.outputs.pull-request-operation)
         run: |
-          # Merging right after creation closes the PR before its `pull_request` checks
-          # get a runner: GitHub then fails those runs with no jobs and the update lands
-          # on the base branch unvalidated. So wait for the checks to be reported, let
-          # them finish and merge only when all of them passed. A failing check leaves
-          # the PR open for a human.
-          echo "⏳ Waiting for checks to be reported on PR #$PR_NUMBER..."
-          checks=0
-          for _ in $(seq 1 36); do
-            # Asking for `mergeable` makes GitHub compute the PR's merge commit, which a
-            # pull_request run needs before it can create its jobs - nobody opens a bot PR,
-            # so without this nudge the run sits with no jobs until the PR is closed.
-            state="$(gh pr view "$PR_NUMBER" --json mergeable,statusCheckRollup --jq '"\(.mergeable) \(.statusCheckRollup | length)"')"
-            checks="${state##* }"
-            echo "   mergeable=${state%% *} checks=$checks"
-            if [ "${checks:-0}" -gt 0 ]; then break; fi
-            sleep 5
-          done
-          if [ "${checks:-0}" -eq 0 ]; then
-            echo "::warning::No checks reported on PR #$PR_NUMBER within 3 min - merging without validation"
-            gh pr merge --merge "$PR_NUMBER"
-            exit 0
-          fi
-          echo "⏳ $checks check(s) reported - waiting for them to finish..."
-          if gh pr checks "$PR_NUMBER" --watch --fail-fast; then
-            echo "✅ All checks passed - merging PR #$PR_NUMBER"
-            gh pr merge --merge "$PR_NUMBER"
-          else
-            echo "::error::Checks failed on PR #$PR_NUMBER - left open for manual review, not merged"
-            exit 1
-          fi
+          # GitHub does not run pull_request workflows for a PR opened with GITHUB_TOKEN
+          # (the run is recorded with no jobs and fails once the PR closes), so the PR's own
+          # CI can never gate this merge. `validate-command` is that gate: merge only when it
+          # passed or was not requested; otherwise leave the PR open for a human.
+          case "$VALIDATE_OUTCOME" in
+            success|skipped)
+              gh pr merge --merge "$PR_NUMBER" ;;
+            *)
+              echo "::error::validate-command failed - PR #$PR_NUMBER left open for manual review, not merged"
+              exit 1 ;;
+          esac
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ steps.create-pr.outputs.pull-request-number }}
+          VALIDATE_OUTCOME: ${{ steps.validate.outcome }}
