@@ -181,13 +181,18 @@ jobs:
           # the PR open for a human.
           echo "⏳ Waiting for checks to be reported on PR #$PR_NUMBER..."
           checks=0
-          for _ in $(seq 1 18); do
-            checks="$(gh pr view "$PR_NUMBER" --json statusCheckRollup --jq '.statusCheckRollup | length')"
+          for _ in $(seq 1 36); do
+            # Asking for `mergeable` makes GitHub compute the PR's merge commit, which a
+            # pull_request run needs before it can create its jobs - nobody opens a bot PR,
+            # so without this nudge the run sits with no jobs until the PR is closed.
+            state="$(gh pr view "$PR_NUMBER" --json mergeable,statusCheckRollup --jq '"\(.mergeable) \(.statusCheckRollup | length)"')"
+            checks="${state##* }"
+            echo "   mergeable=${state%% *} checks=$checks"
             if [ "${checks:-0}" -gt 0 ]; then break; fi
             sleep 5
           done
           if [ "${checks:-0}" -eq 0 ]; then
-            echo "::warning::No checks reported on PR #$PR_NUMBER within 90 s - merging without validation"
+            echo "::warning::No checks reported on PR #$PR_NUMBER within 3 min - merging without validation"
             gh pr merge --merge "$PR_NUMBER"
             exit 0
           fi
