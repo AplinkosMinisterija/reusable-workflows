@@ -9,20 +9,20 @@ on:
         type: string
         default: "ubuntu-latest"
       timeout-minutes:
-        description: "Optional input to set timeout minutes. Defaults to 15"
+        description: "Optional input to set timeout minutes. Defaults to 45, leaving room for validate-command (e.g. a Docker build) before auto-merging"
         required: false
         type: number
-        default: 15
+        default: 45
       node-version:
         description: "Optional input to set node version"
         required: false
         type: string
         default: "20.x"
       composer-version:
-        description: "Optional input to set composer version. Defaults to 2.6"
+        description: "Optional input to set the composer Docker image tag used for outdated/update. Defaults to 2 (floating major), so the image keeps receiving PHP security rebuilds; superseded tags such as 2.6.5 or 2.8.12 are never rebuilt and roave/security-advisories now conflicts with their vulnerable PHP"
         type: string
         required: false
-        default: "2.6"
+        default: "2"
       branch-prefix:
         description: "Optional input to set branch prefix. Defaults to composer-update"
         type: string
@@ -53,6 +53,11 @@ on:
         type: boolean
         required: false
         default: false
+      validate-command:
+        description: "Optional shell command run on the updated checkout before auto-merging, e.g. `docker build --pull .`. A PR opened with GITHUB_TOKEN never gets pull_request workflow runs, so this is the only way to validate the update before it lands; if it fails the PR is left open and the job fails"
+        type: string
+        required: false
+        default: ""
       debug:
         description: "Enable verbose logging for troubleshooting"
         type: boolean
@@ -154,6 +159,16 @@ jobs:
             echo "✅ No changes detected."
           fi
 
+      - name: Validate update
+        id: validate
+        if: env.update_needed == 'true' && env.has_changes == 'true' && inputs.auto-merge && inputs.validate-command != ''
+        continue-on-error: true
+        run: |
+          echo "🔎 Running validate-command on the updated checkout..."
+          bash -eo pipefail -c "$VALIDATE_COMMAND"
+        env:
+          VALIDATE_COMMAND: ${{ inputs.validate-command }}
+
       - name: Create Pull Request
         id: create-pr
         if: env.update_needed == 'true' && env.has_changes == 'true'
@@ -174,8 +189,18 @@ jobs:
       - name: Auto-merge Pull Request
         if: inputs.auto-merge && contains(fromJSON('["created", "updated"]'), steps.create-pr.outputs.pull-request-operation)
         run: |
-          # --auto works only when required checks are pending; fall back to a direct merge otherwise
-          gh pr merge --auto --merge "$PR_NUMBER" || gh pr merge --merge "$PR_NUMBER"
+          # GitHub does not run pull_request workflows for a PR opened with GITHUB_TOKEN
+          # (the run is recorded with no jobs and fails once the PR closes), so the PR's own
+          # CI can never gate this merge. `validate-command` is that gate: merge only when it
+          # passed or was not requested; otherwise leave the PR open for a human.
+          case "$VALIDATE_OUTCOME" in
+            success|skipped)
+              gh pr merge --merge "$PR_NUMBER" ;;
+            *)
+              echo "::error::validate-command failed - PR #$PR_NUMBER left open for manual review, not merged"
+              exit 1 ;;
+          esac
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ steps.create-pr.outputs.pull-request-number }}
+          VALIDATE_OUTCOME: ${{ steps.validate.outcome }}
