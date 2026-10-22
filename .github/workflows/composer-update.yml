@@ -19,10 +19,10 @@ on:
         type: string
         default: "20.x"
       composer-version:
-        description: "Optional input to set composer version. Defaults to 2.6"
+        description: "Optional input to set the composer Docker image tag used for outdated/update. Defaults to 2 (floating major), so the image keeps receiving PHP security rebuilds; superseded tags such as 2.6.5 or 2.8.12 are never rebuilt and roave/security-advisories now conflicts with their vulnerable PHP"
         type: string
         required: false
-        default: "2.6"
+        default: "2"
       branch-prefix:
         description: "Optional input to set branch prefix. Defaults to composer-update"
         type: string
